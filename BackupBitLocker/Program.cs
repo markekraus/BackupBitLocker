@@ -1,4 +1,5 @@
-﻿using System.Management.Automation;
+﻿using System.Diagnostics;
+using System.Management.Automation;
 using System.Threading;
 
 
@@ -8,8 +9,10 @@ namespace BackupBitLocker
     {
         static void Main(string[] args)
         {
-            var powershell = PowerShell.Create();
-            powershell.AddScript(@"
+            using (var powershell = PowerShell.Create())
+            {
+                var stopwatch = Stopwatch.StartNew();
+                powershell.AddScript(@"
 $EncryptedVolumes = Get-BitLockerVolume | 
     Where-Object {$_.VolumeStatus -match 'encrypted|EncryptionInProgress'}
 foreach ($volume in $EncryptedVolumes) {
@@ -31,11 +34,16 @@ foreach ($volume in $EncryptedVolumes) {
     }
 }
 ");
-            var handler = powershell.BeginInvoke();
-            while (!handler.IsCompleted)
-                Thread.Sleep(200);
-            powershell.EndInvoke(handler);
-            powershell.Dispose();
+                var handler = powershell.BeginInvoke();
+                while (!handler.IsCompleted)
+                {
+                    Thread.Sleep(200);
+                    if(stopwatch.Elapsed.Minutes >= 5)
+                        break;
+                }
+                stopwatch.Stop();
+                powershell.EndInvoke(handler);
+            }
         }
     }
 }
