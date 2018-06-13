@@ -7,6 +7,7 @@ namespace BackupBitLocker
 {
     class Program
     {
+        private const int TimeOutMilliseconds = 300000;
         static void Main(string[] args)
         {
             using (var powershell = PowerShell.Create())
@@ -38,7 +39,7 @@ foreach ($volume in $EncryptedVolumes) {
                 while (!handler.IsCompleted)
                 {
                     Thread.Sleep(200);
-                    if(stopwatch.Elapsed.Minutes >= 5)
+                    if(stopwatch.Elapsed.Milliseconds >= TimeOutMilliseconds)
                         break;
                 }
                 stopwatch.Stop();
